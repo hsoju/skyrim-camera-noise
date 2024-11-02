@@ -1,4 +1,8 @@
+#include <glm/gtc/constants.hpp>
 #include "CameraNoiseManager.h"
+
+#include "ENB/ENBSeriesAPI.h"
+ENB_API::ENBSDKALT1001* g_ENB;
 
 #define GetSettingFloat(a_section, a_name, a_setting) a_setting = (float)ini.GetDoubleValue(a_section, a_name, 1.0f);
 #define SetSettingFloat(a_section, a_name, a_setting) ini.SetDoubleValue(a_section, a_name, a_setting);
