@@ -17,7 +17,6 @@ ENB_API::ENBSDKALT1001* g_ENB;
 #define GetSettingInt(a_section, a_name, a_setting) a_setting = (uint32_t)ini.GetLongValue(a_section, a_name, 1);
 #define SetSettingInt(a_section, a_name, a_setting) ini.SetLongValue(a_section, a_name, a_setting);
  
-
 std::vector<float> CameraNoiseManager::GetData(bool use_interpolation)
 {
 	if (!use_interpolation) {
@@ -133,6 +132,8 @@ bool CameraNoiseManager::LoadCustomINI(RE::BSFixedString a_filepath, bool a_isUn
 		ModInterpolation("ThirdPerson", "fAmplitude2", interpolation.second.fAmplitude2, modifier);
 		ModInterpolation("ThirdPerson", "fAmplitude3", interpolation.second.fAmplitude3, modifier);
 
+		interpolationTransitionSpeed = (int)ini.GetDoubleValue("Settings", "iTransitionSpeed", 1);
+
 		bInterpolation = true;
 		return true;
 	} else {
@@ -168,7 +169,12 @@ void CameraNoiseManager::SaveINI()
 	ini.SaveFile(L"Data\\SKSE\\Plugins\\CameraNoise.ini");
 }
 
-bool CameraNoiseManager::CheckInterpolation() {
+void CameraNoiseManager::ResetINIs() {
+	CameraNoiseManager::GetSingleton()->LoadINI();
+	CameraNoiseManager::GetSingleton()->inis.clear();
+}
+
+bool CameraNoiseManager::InterpolationHasEnded() {
 	return interpolation.first.fFrequency1 == 0.0f && interpolation.first.fFrequency2 == 0.0f && interpolation.first.fFrequency3 == 0.0f &&
 		interpolation.first.fAmplitude1 == 0.0f && interpolation.first.fAmplitude2 == 0.0f && interpolation.first.fAmplitude3 == 0.0f &&
 		interpolation.second.fFrequency1 == 0.0f && interpolation.second.fFrequency2 == 0.0f && interpolation.second.fFrequency3 == 0.0f &&
@@ -176,22 +182,21 @@ bool CameraNoiseManager::CheckInterpolation() {
 }
 
 float CameraNoiseManager::GetInterpolation(float i_value) {
-	if (i_value > 0.0f) {
+	if (i_value == 0.0f) {
+		return 0.0f;
+	} else if (i_value > 0.0f) {
 		if (i_value >= 1.0f) {
 			return 1.0f;
 		} else {
 			return i_value;
 		}
 	} else {
-		if (i_value < 0.0f) {
-			if (i_value <= 1.0f) {
-				return -1.0f;
-			} else {
-				return i_value;
-			}
+		if (i_value <= 1.0f) {
+			return -1.0f;
+		} else {
+			return i_value;
 		}
 	}
-	return 0.0f;
 }
 
 void CameraNoiseManager::ApplyInterpolation(Settings& currSettings, Settings& currInterpolation, float Settings::* field) {
@@ -202,32 +207,50 @@ void CameraNoiseManager::ApplyInterpolation(Settings& currSettings, Settings& cu
 	}
 }
 
+void CameraNoiseManager::ApplyInterpolations() {
+	ApplyInterpolation(FirstPerson, interpolation.first, &Settings::fFrequency1);
+	ApplyInterpolation(FirstPerson, interpolation.first, &Settings::fFrequency2);
+	ApplyInterpolation(FirstPerson, interpolation.first, &Settings::fFrequency3);
+	ApplyInterpolation(FirstPerson, interpolation.first, &Settings::fAmplitude1);
+	ApplyInterpolation(FirstPerson, interpolation.first, &Settings::fAmplitude2);
+	ApplyInterpolation(FirstPerson, interpolation.first, &Settings::fAmplitude3);
+
+	ApplyInterpolation(ThirdPerson, interpolation.second, &Settings::fFrequency1);
+	ApplyInterpolation(ThirdPerson, interpolation.second, &Settings::fFrequency2);
+	ApplyInterpolation(ThirdPerson, interpolation.second, &Settings::fFrequency3);
+	ApplyInterpolation(ThirdPerson, interpolation.second, &Settings::fAmplitude1);
+	ApplyInterpolation(ThirdPerson, interpolation.second, &Settings::fAmplitude2);
+	ApplyInterpolation(ThirdPerson, interpolation.second, &Settings::fAmplitude3);
+}
+
+void CameraNoiseManager::CheckInterpolate() {
+	if (interpolationCounter % iInterpolationY < iInterpolationX) {
+		ApplyInterpolations();
+		if (InterpolationHasEnded()) {
+			bInterpolation = false;
+			interpolationCounter = 0;
+		} else {
+			interpolationCounter += 1;
+		}
+	} else {
+		interpolationCounter += 1;
+	}
+}
+
 void CameraNoiseManager::Interpolate()
 {
 	if (bInterpolation) {
-		if (interpolationCounter % iInterpolationY < iInterpolationX) {
-			ApplyInterpolation(FirstPerson, interpolation.first, &Settings::fFrequency1);
-			ApplyInterpolation(FirstPerson, interpolation.first, &Settings::fFrequency2);
-			ApplyInterpolation(FirstPerson, interpolation.first, &Settings::fFrequency3);
-			ApplyInterpolation(FirstPerson, interpolation.first, &Settings::fAmplitude1);
-			ApplyInterpolation(FirstPerson, interpolation.first, &Settings::fAmplitude2);
-			ApplyInterpolation(FirstPerson, interpolation.first, &Settings::fAmplitude3);
-
-			ApplyInterpolation(ThirdPerson, interpolation.second, &Settings::fFrequency1);
-			ApplyInterpolation(ThirdPerson, interpolation.second, &Settings::fFrequency2);
-			ApplyInterpolation(ThirdPerson, interpolation.second, &Settings::fFrequency3);
-			ApplyInterpolation(ThirdPerson, interpolation.second, &Settings::fAmplitude1);
-			ApplyInterpolation(ThirdPerson, interpolation.second, &Settings::fAmplitude2);
-			ApplyInterpolation(ThirdPerson, interpolation.second, &Settings::fAmplitude3);
-
-			if (CheckInterpolation()) {
-				bInterpolation = false;
-				interpolationCounter = 0;
-			} else {
-				interpolationCounter += 1;
+		if (interpolationTransitionSpeed > 0) {
+			for (int idx = 0; idx < interpolationTransitionSpeed; idx++) {
+				CheckInterpolate();
 			}
 		} else {
-			interpolationCounter += 1;
+			if (interpolationTransitionIdx <= interpolationTransitionSpeed) {
+				interpolationTransitionIdx = 0;
+				CheckInterpolate();
+			} else {
+				interpolationTransitionIdx -= 1;
+			}
 		}
 	}
 }

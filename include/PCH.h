@@ -74,6 +74,9 @@ namespace util
 #define DLLEXPORT __declspec(dllexport)
 
 #include "Plugin.h"
+
+#include "CameraNoise_API.h"
+#include "ModAPI.h"
 #include "PapyrusAPI.h"
 #include "Serialization.h"
 
@@ -120,7 +123,7 @@ extern "C" DLLEXPORT bool SKSEAPI SKSEPlugin_Load(const SKSE::LoadInterface* a_s
 	PapyrusAPI::SetupAPI();
 	auto serialization = SKSE::GetSerializationInterface();
 	serialization->SetUniqueID(Serialization::kUniqueID);
-	serialization->SetSaveCallback(Serialization::SaveCallback);
+	//serialization->SetSaveCallback(Serialization::SaveCallback);
 	serialization->SetLoadCallback(Serialization::LoadCallback);
 	serialization->SetRevertCallback(Serialization::RevertCallback);
 	return SetupHooks();
@@ -141,4 +144,21 @@ extern "C" DLLEXPORT bool SKSEAPI SKSEPlugin_Query(const SKSE::QueryInterface*, 
 	pluginInfo->infoVersion = SKSE::PluginInfo::kVersion;
 	pluginInfo->version = SKSEPlugin_Version.pluginVersion;
 	return true;
+}
+
+extern "C" DLLEXPORT void* SKSEAPI RequestPluginAPI(const CameraNoise_API::InterfaceVersion a_interfaceVersion)
+{ 
+	const auto api = CameraNoiseInterfaceImpl::GetSingleton();
+
+	logger::info("CameraNoise::RequestPluginAPI called, InterfaceVersion {}", 
+		static_cast<std::underlying_type<CameraNoise_API::InterfaceVersion>::type>(a_interfaceVersion));
+
+	switch (a_interfaceVersion) {
+	case CameraNoise_API::InterfaceVersion::V1:
+		logger::info("CameraNoise::RequestPluginAPI returned the API singleton");
+		return api;
+	}
+
+	logger::info("CameraNoise::RequestPluginAPI requested the wrong interface version");
+	return nullptr;
 }

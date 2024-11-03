@@ -16,8 +16,7 @@ namespace PapyrusAPI
 
 	bool ResetINI(RE::StaticFunctionTag*)
 	{
-		CameraNoiseManager::GetSingleton()->LoadINI();
-		CameraNoiseManager::GetSingleton()->inis.clear();
+		CameraNoiseManager::GetSingleton()->ResetINIs();
 		return true;
 	}
 
