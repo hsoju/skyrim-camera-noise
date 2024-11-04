@@ -1,10 +1,7 @@
 #pragma once
 
-#include "CameraNoiseManager.h"
-
-class ENBHandler
+namespace ENBHandler
 {
-public:
-	static void RefreshUI();
-	static void MessageHandler(SKSE::MessagingInterface::Message* a_msg);
+	void RefreshUI();
+	void MessageHandler(SKSE::MessagingInterface::Message* a_msg);
 };

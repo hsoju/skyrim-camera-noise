@@ -2,8 +2,7 @@
 #include "CameraNoiseManager.h"
 #include "IniHandler.h"
 
-#include "ENB/ENBSeriesAPI.h"
-ENB_API::ENBSDKALT1001* g_ENB;
+#include "ENB/enbseries.h"
 
 void CameraNoiseManager::LoadINI()
 {

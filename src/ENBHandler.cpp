@@ -1,9 +1,8 @@
+#include "ENB/ENBSeriesAPI.h"
 #include "ENBHandler.h"
 #include "CameraNoiseManager.h"
 
-#include "ENB/ENBSeriesAPI.h"
-
-extern ENB_API::ENBSDKALT1001* g_ENB;
+ENB_API::ENBSDKALT1001* g_ENB;
 
 #define TWDEF "group = 'MOD:Camera Noise' precision = 2 step = 0.01 "
 #define TWDEF2 "group = 'First Person' precision = 2 step = 0.01 "
@@ -13,8 +12,8 @@ extern ENB_API::ENBSDKALT1001* g_ENB;
 void ENBHandler::RefreshUI()
 {
 	auto camera_manager = CameraNoiseManager::GetSingleton();
-
 	auto bar = g_ENB->TwGetBarByEnum(!REL::Module::IsVR() ? ENB_API::ENBWindowType::EditorBarEffects : ENB_API::ENBWindowType::EditorBarObjects);  // ENB misnames its own bar, whoops!
+
 	g_ENB->TwAddVarRW(bar, "EnableCameraNoise", ETwType::TW_TYPE_BOOLCPP, &camera_manager->bEnabled, TWDEF);
 
 	g_ENB->TwAddVarRW(bar, "1PFrequency1", ETwType::TW_TYPE_FLOAT, &camera_manager->FirstPerson.fFrequency1, TWDEF2 " label = 'fFrequency1 (Translation)'");
@@ -44,7 +43,7 @@ void ENBHandler::MessageHandler(SKSE::MessagingInterface::Message* a_msg)
 {
 	switch (a_msg->type) {
 	case SKSE::MessagingInterface::kPostLoad:
-		ENB_API::ENBSDKALT1001* g_ENB = reinterpret_cast<ENB_API::ENBSDKALT1001*>(ENB_API::RequestENBAPI(ENB_API::SDKVersion::V1001));
+		g_ENB = reinterpret_cast<ENB_API::ENBSDKALT1001*>(ENB_API::RequestENBAPI(ENB_API::SDKVersion::V1001));
 		if (g_ENB) {
 			logger::info("Obtained ENB API");
 			g_ENB->SetCallbackFunction([](ENBCallbackType calltype) {

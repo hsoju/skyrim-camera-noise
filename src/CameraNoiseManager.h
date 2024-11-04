@@ -7,7 +7,7 @@
 #include <SimpleINI.h>
 
 #include "PerlinNoise.hpp"
-#include "ENB/ENBSeriesAPI.h"
+#include "ENB/enbseries.h"
 
 class CameraNoiseManager
 {
