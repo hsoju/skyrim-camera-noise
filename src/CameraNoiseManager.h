@@ -48,9 +48,6 @@ public:
 	std::pair<Settings, Settings> interpolation;
 
 	std::unordered_set<std::string> inis;
-	
-	std::vector<float> GetData(bool use_interpolation=false);
-	void SetData(const std::vector<float>& _data, bool use_interpolation = false);
 
 	RE::PlayerCharacter* player = RE::PlayerCharacter::GetSingleton();
 
@@ -76,6 +73,7 @@ public:
 	void ResetINIs();
 
 	bool InterpolationHasEnded();
+	void SetInterpolation(const std::vector<float>& _data, bool use_interpolation);
 	float GetInterpolation(float i_value);
 	void ApplyInterpolation(Settings& currSettings, Settings& currInterpolation, float Settings::*field);
 	void ApplyInterpolations();
@@ -83,10 +81,6 @@ public:
 	void Interpolate();
 
 	void Update(RE::TESCamera* a_camera);
-
-	// ENB UI
-
-	void RefreshUI();
 
 protected:
 	struct Hooks

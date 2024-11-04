@@ -12,7 +12,7 @@ bool SetupHooks()
 {
 	std::vector<float> interp(12);
 	std::fill(interp.begin(), interp.end(), 0.0f);
-	CameraNoiseManager::GetSingleton()->SetData(interp, true);
+	CameraNoiseManager::GetSingleton()->SetInterpolation(interp, true);
 	Hooks::Install();
 	return true;
 }
